@@ -1,0 +1,2825 @@
+openapi: 3.0.3
+info:
+  title: StayLocal Backend API
+  version: 1.0.0
+  description: Contract-first REST API for the StayLocal community tourism platform.
+    Covers authentication, destinations, properties, media, camera+GPS verification,
+    bookings, rewards, reviews and admin moderation.
+  contact:
+    name: StayLocal Project Team
+    email: staylocal-team@example.com
+servers:
+- url: http://localhost:8787
+  description: Local development
+- url: http://localhost:8787
+  description: Demo/CI default
+tags:
+- name: Auth
+  description: Registration and authentication
+- name: Destinations
+  description: Seeded destination catalog
+- name: Properties
+  description: Property discovery and host listing management
+- name: Media
+  description: Photo upload and asset attachment
+- name: Verification
+  description: Camera + GPS property verification
+- name: Bookings
+  description: Booking lifecycle and printable vouchers
+- name: Rewards
+  description: ₹100 StayLocal reward coupons
+- name: Reviews
+  description: Tourist reviews
+- name: Admin
+  description: Host and property moderation
+paths:
+  /api/v1/auth/register:
+    post:
+      operationId: registerUser
+      summary: Register a StayLocal user
+      description: Creates a tourist or host account. Admin accounts are provisioned
+        outside public registration. Duplicate email addresses are rejected.
+      tags:
+      - Auth
+      security: &id001 []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              - password
+              - fullName
+              - role
+              properties:
+                email:
+                  type: string
+                  format: email
+                  maxLength: 254
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 72
+                fullName:
+                  type: string
+                  minLength: 2
+                  maxLength: 120
+                phone:
+                  type: string
+                  maxLength: 20
+                  nullable: true
+                role:
+                  type: string
+                  enum:
+                  - TOURIST
+                  - HOST
+            examples:
+              201_register_success:
+                value:
+                  email: newtourist@staylocal.demo
+                  password: DemoPass123!
+                  fullName: Neha Kulkarni
+                  phone: '+919800001111'
+                  role: TOURIST
+              422_register_invalid_role:
+                value:
+                  email: newtourist@staylocal.demo
+                  password: DemoPass123!
+                  fullName: Neha Kulkarni
+                  role: ADMIN
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                201_register_success:
+                  value: &id002
+                    accessToken: eyJhbGciOiJIUzI1NiJ9.demo
+                    expiresInSeconds: 3600
+                    user:
+                      id: 10000000-0000-4000-8000-000000000001
+                      email: tourist@staylocal.demo
+                      fullName: Aarav Sharma
+                      role: TOURIST
+                      createdAt: '2026-09-28T12:00:00Z'
+        '400':
+          description: Malformed JSON request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                400_register_bad_json:
+                  value:
+                    code: BAD_REQUEST
+                    message: Malformed JSON request.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '409':
+          description: Email is already registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                409_register_duplicate_email:
+                  value:
+                    code: EMAIL_ALREADY_EXISTS
+                    message: Email is already registered.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_register_invalid_role:
+                  value:
+                    code: VALIDATION_ERROR
+                    message: Request validation failed.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '500':
+          description: Unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                500_register_server_error:
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected server error.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/auth/login:
+    post:
+      operationId: loginUser
+      summary: Authenticate a user
+      description: Validates credentials and returns a bearer access token. Invalid
+        credentials do not reveal whether an email exists.
+      tags:
+      - Auth
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  maxLength: 254
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 72
+            examples:
+              200_login_success:
+                value:
+                  email: tourist@staylocal.demo
+                  password: DemoPass123!
+              401_login_invalid_credentials:
+                value:
+                  email: tourist@staylocal.demo
+                  password: WrongPass123!
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                200_login_success:
+                  value: *id002
+        '401':
+          description: Invalid email or password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_login_invalid_credentials:
+                  value:
+                    code: INVALID_CREDENTIALS
+                    message: Invalid email or password.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_login_validation:
+                  value:
+                    code: VALIDATION_ERROR
+                    message: Request validation failed.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '429':
+          description: Too many login attempts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                429_login_rate_limited:
+                  value:
+                    code: RATE_LIMITED
+                    message: Too many login attempts.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '500':
+          description: Unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                500_login_server_error:
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected server error.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: Get current session user
+      description: Returns the authenticated user and active role.
+      tags:
+      - Auth
+      security: &id003
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              examples:
+                200_me_success:
+                  value: &id008
+                    id: 10000000-0000-4000-8000-000000000001
+                    email: tourist@staylocal.demo
+                    fullName: Aarav Sharma
+                    phone: '+919876543210'
+                    role: TOURIST
+                    createdAt: '2026-09-28T12:00:00Z'
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_me_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '500':
+          description: Unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                500_me_server_error:
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected server error.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/auth/logout:
+    post:
+      operationId: logoutUser
+      summary: Logout current user
+      description: Revokes the current refresh/session state where applicable. Access
+        tokens naturally expire.
+      tags:
+      - Auth
+      security: *id003
+      responses:
+        '204':
+          description: Logged out successfully.
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_logout_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/destinations:
+    get:
+      operationId: listDestinations
+      summary: List StayLocal destinations
+      description: Returns the four seeded destinations used by the project demo.
+      tags:
+      - Destinations
+      security: *id001
+      responses:
+        '200':
+          description: Destination list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Destination'
+              examples:
+                200_destinations_success:
+                  value:
+                  - &id004
+                    id: dest-bhimashankar
+                    name: Bhimashankar
+                    slug: bhimashankar
+                    latitude: 19.0729
+                    longitude: 73.5358
+                    description: Forest, temple and nature-focused destination.
+                    imageUrl: https://example.com/bhimashankar.jpg
+        '500':
+          description: Unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                500_destinations_server_error:
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected server error.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/destinations/{destinationId}:
+    get:
+      operationId: getDestination
+      summary: Get a destination
+      description: Returns a single destination by ID.
+      tags:
+      - Destinations
+      security: *id001
+      parameters:
+      - name: destinationId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 3
+          maxLength: 80
+        examples:
+          200_destination_bhimashankar:
+            value: dest-bhimashankar
+          404_destination_missing:
+            value: dest-missing
+      responses:
+        '200':
+          description: Destination found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Destination'
+              examples:
+                200_destination_bhimashankar:
+                  value: *id004
+        '404':
+          description: Destination not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_destination_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Destination not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Destination ID is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_destination_invalid_id:
+                  value:
+                    code: VALIDATION_ERROR
+                    message: Destination ID is invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/properties:
+    get:
+      operationId: listProperties
+      summary: Search approved properties
+      description: Returns public, approved listings with price and destination filters
+        and optional date availability filtering. Results are paginated.
+      tags:
+      - Properties
+      security: *id001
+      parameters:
+      - name: destinationId
+        in: query
+        required: false
+        schema:
+          type: string
+        examples:
+          200_properties_filtered:
+            value: dest-bhimashankar
+      - name: minPrice
+        in: query
+        required: false
+        schema:
+          type: number
+          minimum: 0
+        examples:
+          200_properties_filtered:
+            value: 1000
+      - name: maxPrice
+        in: query
+        required: false
+        schema:
+          type: number
+          minimum: 0
+        examples:
+          200_properties_filtered:
+            value: 3000
+      - name: checkIn
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        examples:
+          200_properties_available:
+            value: '2026-10-10'
+      - name: checkOut
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        examples:
+          200_properties_available:
+            value: '2026-10-12'
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        examples:
+          200_properties_paged:
+            value: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 12
+        examples:
+          200_properties_paged:
+            value: 12
+      responses:
+        '200':
+          description: Property results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProperties'
+              examples:
+                200_properties_filtered:
+                  value:
+                    items:
+                    - &id005
+                      id: prop-1001
+                      hostId: host-1001
+                      destinationId: dest-bhimashankar
+                      title: Forest View Local Homestay
+                      description: Simple private room with a local host near Bhimashankar.
+                      pricePerNight: 1800
+                      maxGuests: 3
+                      amenities:
+                      - Wi-Fi
+                      - Parking
+                      - Hot Water
+                      photos: []
+                      status: APPROVED
+                      latitude: 19.0731
+                      longitude: 73.5356
+                      locationVerified: true
+                      verification: null
+                      createdAt: '2026-09-20T09:00:00Z'
+                      updatedAt: '2026-09-20T09:00:00Z'
+                    page: 1
+                    pageSize: 12
+                    total: 1
+        '422':
+          description: One or more search parameters are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_properties_invalid_filter:
+                  value:
+                    code: VALIDATION_ERROR
+                    message: One or more search parameters are invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '429':
+          description: Request rate exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                429_properties_rate_limited:
+                  value:
+                    code: RATE_LIMITED
+                    message: Request rate exceeded.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '500':
+          description: Unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                500_properties_server_error:
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected server error.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+    post:
+      operationId: createProperty
+      summary: Create a room listing
+      description: Creates a draft listing for an approved host. A non-approved host
+        cannot publish or submit a listing.
+      tags:
+      - Properties
+      security: *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - destinationId
+              - title
+              - description
+              - pricePerNight
+              - maxGuests
+              - latitude
+              - longitude
+              properties:
+                destinationId:
+                  type: string
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 160
+                description:
+                  type: string
+                  minLength: 20
+                  maxLength: 5000
+                pricePerNight:
+                  type: number
+                  minimum: 1
+                  maximum: 100000
+                maxGuests:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                amenities:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 30
+                latitude:
+                  type: number
+                  minimum: -90
+                  maximum: 90
+                longitude:
+                  type: number
+                  minimum: -180
+                  maximum: 180
+            examples:
+              201_property_create_success:
+                value:
+                  destinationId: dest-bhimashankar
+                  title: Forest View Local Homestay
+                  description: Simple private room with a local host near Bhimashankar.
+                  pricePerNight: 1800
+                  maxGuests: 3
+                  amenities:
+                  - Wi-Fi
+                  - Parking
+                  - Hot Water
+                  latitude: 19.0731
+                  longitude: 73.5356
+              422_property_create_invalid_price:
+                value:
+                  destinationId: dest-bhimashankar
+                  title: Bad Property
+                  description: This description is long enough for validation.
+                  pricePerNight: 0
+                  maxGuests: 3
+                  latitude: 19.0731
+                  longitude: 73.5356
+      responses:
+        '201':
+          description: Property created as DRAFT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+              examples:
+                201_property_create_success:
+                  value: *id005
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_property_create_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: Only an approved host can create listings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_property_create_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: Only an approved host can create listings.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_property_create_invalid_price:
+                  value:
+                    code: VALIDATION_ERROR
+                    message: Request validation failed.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '500':
+          description: Unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                500_property_create_server_error:
+                  value:
+                    code: INTERNAL_ERROR
+                    message: Unexpected server error.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/properties/{propertyId}:
+    get:
+      operationId: getProperty
+      summary: Get property details
+      description: Returns a property, host-facing verification information, and public
+        photos. Rejected/inactive properties are hidden from public users.
+      tags:
+      - Properties
+      security: *id001
+      parameters:
+      - name: propertyId
+        in: path
+        required: true
+        schema:
+          type: string
+        examples:
+          200_property_details:
+            value: prop-1001
+          404_property_missing:
+            value: prop-missing
+      responses:
+        '200':
+          description: Property found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+              examples:
+                200_property_details:
+                  value: *id005
+        '404':
+          description: Property not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_property_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Property not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+    patch:
+      operationId: updateProperty
+      summary: Edit a room listing
+      description: Updates a host-owned listing. Changes to material listing data
+        reset approval to PENDING so the admin can review the new state.
+      tags:
+      - Properties
+      security: *id003
+      parameters:
+      - name: propertyId
+        in: path
+        required: true
+        schema:
+          type: string
+        examples:
+          200_property_update_success:
+            value: prop-1001
+          404_property_update_missing:
+            value: prop-missing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 160
+                description:
+                  type: string
+                  minLength: 20
+                  maxLength: 5000
+                pricePerNight:
+                  type: number
+                  minimum: 1
+                  maximum: 100000
+                maxGuests:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                amenities:
+                  type: array
+                  items:
+                    type: string
+            examples:
+              200_property_update_success:
+                value:
+                  pricePerNight: 1900
+                  maxGuests: 3
+              422_property_update_invalid:
+                value:
+                  pricePerNight: 0
+      responses:
+        '200':
+          description: Property updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+              examples:
+                200_property_update_success:
+                  value: *id005
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_property_update_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: User does not own the property.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_property_update_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: User does not own the property.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '404':
+          description: Property not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_property_update_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Property not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_property_update_invalid:
+                  value:
+                    code: VALIDATION_ERROR
+                    message: Request validation failed.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/properties/{propertyId}/photos:
+    post:
+      operationId: addPropertyPhoto
+      summary: Attach an uploaded photo to a property
+      description: Links a previously uploaded storage asset to a host-owned listing.
+        The upload itself is performed through the storage service using the upload
+        contract.
+      tags:
+      - Properties
+      - Media
+      security: *id003
+      parameters:
+      - name: propertyId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - assetId
+              properties:
+                assetId:
+                  type: string
+                caption:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+            examples:
+              201_property_photo_success:
+                value:
+                  assetId: asset-1001
+                  caption: Room view
+              422_property_photo_invalid:
+                value:
+                  assetId: ''
+      responses:
+        '201':
+          description: Photo attached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyPhoto'
+              examples:
+                201_property_photo_success:
+                  value:
+                    id: photo-1001
+                    assetUrl: https://storage.example.com/staylocal/photo-1001.jpg
+                    caption: Room view
+                    isVerificationPhoto: false
+                    createdAt: '2026-09-28T12:00:00Z'
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_property_photo_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: User does not own the property.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_property_photo_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: User does not own the property.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '404':
+          description: Property or asset not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_property_photo_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Property or asset not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Invalid asset attachment request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_property_photo_invalid:
+                  value:
+                    code: VALIDATION_ERROR
+                    message: Invalid asset attachment request.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/properties/{propertyId}/verification:
+    post:
+      operationId: verifyPropertyLocation
+      summary: Verify host device proximity with camera + GPS
+      description: Records the captured room photo asset, GPS coordinates, capture
+        time and calculated Haversine distance. The server awards Location Verified
+        only when distance is at most 50 meters; demo simulation modes are permitted
+        for non-production environments.
+      tags:
+      - Verification
+      security: *id003
+      parameters:
+      - name: propertyId
+        in: path
+        required: true
+        schema:
+          type: string
+        examples:
+          200_verification_success:
+            value: prop-1001
+          404_verification_missing_property:
+            value: prop-missing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - photoAssetId
+              - capturedLatitude
+              - capturedLongitude
+              - capturedAt
+              - mode
+              properties:
+                photoAssetId:
+                  type: string
+                capturedLatitude:
+                  type: number
+                  minimum: -90
+                  maximum: 90
+                capturedLongitude:
+                  type: number
+                  minimum: -180
+                  maximum: 180
+                accuracyMeters:
+                  type: number
+                  minimum: 0
+                  nullable: true
+                capturedAt:
+                  type: string
+                  format: date-time
+                mode:
+                  type: string
+                  enum:
+                  - LIVE
+                  - SIMULATED_AT_PROPERTY
+                  - SIMULATED_AWAY
+            examples:
+              200_verification_success:
+                value:
+                  photoAssetId: asset-verify-1001
+                  capturedLatitude: 19.0731
+                  capturedLongitude: 73.5356
+                  accuracyMeters: 8.5
+                  capturedAt: '2026-09-28T12:05:00Z'
+                  mode: LIVE
+              200_verification_rejected:
+                value:
+                  photoAssetId: asset-verify-1002
+                  capturedLatitude: 19.09
+                  capturedLongitude: 73.56
+                  accuracyMeters: 15.0
+                  capturedAt: '2026-09-28T12:06:00Z'
+                  mode: SIMULATED_AWAY
+      responses:
+        '200':
+          description: Verification evaluated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResult'
+              examples:
+                200_verification_success:
+                  value:
+                    status: VERIFIED
+                    distanceMeters: 7.3
+                    thresholdMeters: 50
+                    capturedLatitude: 19.0731
+                    capturedLongitude: 73.5356
+                    propertyLatitude: 19.0731
+                    propertyLongitude: 73.5356
+                    accuracyMeters: 8.5
+                    capturedAt: '2026-09-28T12:05:00Z'
+                    photoAssetId: asset-verify-1001
+                    mode: LIVE
+                    disclaimer: GPS proximity verifies device location at capture
+                      time; it does not independently guarantee room condition.
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_verification_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: User does not own the property.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_verification_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: User does not own the property.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '404':
+          description: Property or photo asset not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_verification_missing_property:
+                  value:
+                    code: NOT_FOUND
+                    message: Property or photo asset not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Verification payload is invalid or simulation is not allowed
+            in the current environment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_verification_invalid:
+                  value:
+                    code: VERIFICATION_INVALID
+                    message: Verification payload is invalid or simulation is not
+                      allowed in the current environment.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/properties/{propertyId}/reviews:
+    get:
+      operationId: listPropertyReviews
+      summary: List property reviews
+      description: Returns public reviews for a property, newest first.
+      tags:
+      - Reviews
+      security: *id001
+      parameters:
+      - name: propertyId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Review list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+              examples:
+                200_reviews_success:
+                  value:
+                  - id: rev-1001
+                    propertyId: prop-1001
+                    touristId: 10000000-0000-4000-8000-000000000001
+                    rating: 5
+                    comment: Friendly host and clean room.
+                    createdAt: '2026-09-28T10:00:00Z'
+        '404':
+          description: Property not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_reviews_property_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Property not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+    post:
+      operationId: createPropertyReview
+      summary: Create a property review
+      description: Allows a tourist to review a completed booking for the property.
+        One review per completed booking is enforced.
+      tags:
+      - Reviews
+      security: *id003
+      parameters:
+      - name: propertyId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - bookingId
+              - rating
+              - comment
+              properties:
+                bookingId:
+                  type: string
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comment:
+                  type: string
+                  minLength: 3
+                  maxLength: 2000
+            examples:
+              201_review_success:
+                value:
+                  bookingId: book-1001
+                  rating: 5
+                  comment: Friendly host and clean room.
+              409_review_duplicate:
+                value:
+                  bookingId: book-1001
+                  rating: 4
+                  comment: Updated review
+      responses:
+        '201':
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+              examples:
+                201_review_success:
+                  value:
+                    id: rev-1002
+                    propertyId: prop-1001
+                    touristId: 10000000-0000-4000-8000-000000000001
+                    rating: 5
+                    comment: Friendly host and clean room.
+                    createdAt: '2026-09-28T12:30:00Z'
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_review_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: Booking is not owned by the current tourist or is not completed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_review_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: Booking is not owned by the current tourist or is not
+                      completed.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '409':
+          description: A review already exists for this booking.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                409_review_duplicate:
+                  value:
+                    code: REVIEW_ALREADY_EXISTS
+                    message: A review already exists for this booking.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Review payload is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_review_invalid:
+                  value:
+                    code: VALIDATION_ERROR
+                    message: Review payload is invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/uploads/init:
+    post:
+      operationId: initUpload
+      summary: Create a signed media upload
+      description: Returns a short-lived upload URL or an equivalent local-storage
+        target. The API validates media type and size before issuing the upload contract.
+      tags:
+      - Media
+      security: *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - filename
+              - contentType
+              - sizeBytes
+              properties:
+                filename:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                contentType:
+                  type: string
+                  enum:
+                  - image/jpeg
+                  - image/png
+                  - image/webp
+                sizeBytes:
+                  type: integer
+                  minimum: 1
+                  maximum: 10485760
+            examples:
+              201_upload_init_success:
+                value:
+                  filename: room.jpg
+                  contentType: image/jpeg
+                  sizeBytes: 524288
+              422_upload_too_large:
+                value:
+                  filename: room.jpg
+                  contentType: image/jpeg
+                  sizeBytes: 20000000
+      responses:
+        '201':
+          description: Upload initialized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadInit'
+              examples:
+                201_upload_init_success:
+                  value:
+                    assetId: asset-1001
+                    uploadUrl: https://storage.example.com/upload/asset-1001?signature=demo
+                    expiresAt: '2026-09-28T12:10:00Z'
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_upload_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Unsupported type or file too large.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_upload_too_large:
+                  value:
+                    code: MEDIA_INVALID
+                    message: Unsupported type or file too large.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/bookings:
+    get:
+      operationId: listMyBookings
+      summary: List current user's bookings
+      description: Tourists see their own bookings. Hosts see bookings for their approved
+        listings. Admins see all bookings.
+      tags:
+      - Bookings
+      security: *id003
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - CONFIRMED
+          - CANCELLED
+          - COMPLETED
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 12
+      responses:
+        '200':
+          description: Booking list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                - page
+                - pageSize
+                - total
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  total:
+                    type: integer
+              examples:
+                200_bookings_success:
+                  value:
+                    items:
+                    - &id006
+                      id: book-1001
+                      propertyId: prop-1001
+                      touristId: 10000000-0000-4000-8000-000000000001
+                      checkIn: '2026-10-10'
+                      checkOut: '2026-10-12'
+                      guests: 2
+                      nightCount: 2
+                      subtotal: 3600
+                      discount: 100
+                      total: 3500
+                      couponCode: STAY100-AB12CD
+                      status: CONFIRMED
+                      paymentMethod: UPI_QR
+                      createdAt: '2026-09-28T12:00:00Z'
+                      confirmedAt: '2026-09-28T12:01:00Z'
+                    page: 1
+                    pageSize: 12
+                    total: 1
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_bookings_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+    post:
+      operationId: createBooking
+      summary: Create a booking
+      description: Creates a booking after server-side date, guest, price and overlap
+        validation. A booking can include an available ₹100 reward coupon from a prior
+        booking.
+      tags:
+      - Bookings
+      security: *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - propertyId
+              - checkIn
+              - checkOut
+              - guests
+              - paymentMethod
+              properties:
+                propertyId:
+                  type: string
+                checkIn:
+                  type: string
+                  format: date
+                checkOut:
+                  type: string
+                  format: date
+                guests:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                couponCode:
+                  type: string
+                  maxLength: 40
+                  nullable: true
+                paymentMethod:
+                  type: string
+                  enum:
+                  - UPI_QR
+                  - DEMO_CARD
+                  - PAY_AT_STAY
+            examples:
+              201_booking_success:
+                value:
+                  propertyId: prop-1001
+                  checkIn: '2026-10-10'
+                  checkOut: '2026-10-12'
+                  guests: 2
+                  couponCode: STAY100-AB12CD
+                  paymentMethod: UPI_QR
+              409_booking_overlap:
+                value:
+                  propertyId: prop-1001
+                  checkIn: '2026-10-11'
+                  checkOut: '2026-10-13'
+                  guests: 2
+                  paymentMethod: PAY_AT_STAY
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+              examples:
+                201_booking_success:
+                  value: *id006
+        '400':
+          description: Malformed booking request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                400_booking_bad_request:
+                  value:
+                    code: BAD_REQUEST
+                    message: Malformed booking request.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_booking_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '404':
+          description: Property or coupon not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_booking_dependency_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Property or coupon not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '409':
+          description: Selected dates overlap an existing booking.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                409_booking_overlap:
+                  value:
+                    code: BOOKING_CONFLICT
+                    message: Selected dates overlap an existing booking.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Check-out must be after check-in, guest count is too high,
+            or coupon is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_booking_validation:
+                  value:
+                    code: BOOKING_INVALID
+                    message: Check-out must be after check-in, guest count is too
+                      high, or coupon is invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/bookings/{bookingId}:
+    get:
+      operationId: getBooking
+      summary: Get booking details
+      description: Returns a booking visible to its tourist, listing host, or an admin.
+      tags:
+      - Bookings
+      security: *id003
+      parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+        examples:
+          200_booking_details:
+            value: book-1001
+          404_booking_missing:
+            value: book-missing
+      responses:
+        '200':
+          description: Booking found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+              examples:
+                200_booking_details:
+                  value: *id006
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_booking_details_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: User cannot access this booking.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_booking_details_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: User cannot access this booking.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '404':
+          description: Booking not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_booking_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Booking not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/bookings/{bookingId}/confirm:
+    post:
+      operationId: confirmBooking
+      summary: Confirm a simulated payment and booking
+      description: Transitions a pending booking to CONFIRMED and idempotently issues
+        the tourist's ₹100 reward coupon. This is a simulated payment workflow only.
+      tags:
+      - Bookings
+      - Rewards
+      security: *id003
+      parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - paymentMethod
+              properties:
+                paymentMethod:
+                  type: string
+                  enum:
+                  - UPI_QR
+                  - DEMO_CARD
+                  - PAY_AT_STAY
+            examples:
+              200_booking_confirm_success:
+                value:
+                  paymentMethod: UPI_QR
+              409_booking_confirm_invalid_state:
+                value:
+                  paymentMethod: UPI_QR
+      responses:
+        '200':
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+              examples:
+                200_booking_confirm_success:
+                  value: *id006
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_booking_confirm_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: User cannot confirm this booking.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_booking_confirm_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: User cannot confirm this booking.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '404':
+          description: Booking not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_booking_confirm_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Booking not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '409':
+          description: Booking cannot be confirmed from its current state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                409_booking_confirm_invalid_state:
+                  value:
+                    code: INVALID_STATE
+                    message: Booking cannot be confirmed from its current state.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/bookings/{bookingId}/voucher:
+    get:
+      operationId: getBookingVoucher
+      summary: Get printable booking voucher data
+      description: Returns all data needed by the frontend to render and print the
+        StayLocal Trip Voucher, including a QR payload.
+      tags:
+      - Bookings
+      security: *id003
+      parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+        examples:
+          200_voucher_success:
+            value: book-1001
+          404_voucher_missing:
+            value: book-missing
+      responses:
+        '200':
+          description: Voucher data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingVoucher'
+              examples:
+                200_voucher_success:
+                  value: &id009
+                    booking:
+                      id: book-1001
+                      propertyId: prop-1001
+                      touristId: 10000000-0000-4000-8000-000000000001
+                      checkIn: '2026-10-10'
+                      checkOut: '2026-10-12'
+                      guests: 2
+                      nightCount: 2
+                      subtotal: 3600
+                      discount: 100
+                      total: 3500
+                      couponCode: STAY100-AB12CD
+                      status: CONFIRMED
+                      paymentMethod: UPI_QR
+                      createdAt: '2026-09-28T12:00:00Z'
+                      confirmedAt: '2026-09-28T12:01:00Z'
+                    verificationCode: SL-AB12CD34
+                    hostContact: '+919876543210'
+                    qrPayload: STAYLOCAL|BOOKING|book-1001|SL-AB12CD34
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_voucher_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: User cannot access this voucher.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_voucher_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: User cannot access this voucher.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '404':
+          description: Booking not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_voucher_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Booking not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/coupons/validate:
+    post:
+      operationId: validateCoupon
+      summary: Validate a reward coupon at checkout
+      description: Checks that a coupon belongs to the authenticated tourist, is available,
+        and is applicable to the booking subtotal.
+      tags:
+      - Rewards
+      security: *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              - subtotal
+              properties:
+                code:
+                  type: string
+                  pattern: ^STAY100-[A-Z0-9]{6}$
+                subtotal:
+                  type: number
+                  minimum: 0
+            examples:
+              200_coupon_valid:
+                value:
+                  code: STAY100-AB12CD
+                  subtotal: 3600
+              422_coupon_invalid:
+                value:
+                  code: BADCODE
+                  subtotal: 3600
+      responses:
+        '200':
+          description: Coupon is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - valid
+                - discount
+                properties:
+                  valid:
+                    type: boolean
+                  discount:
+                    type: number
+                  currency:
+                    type: string
+                    enum:
+                    - INR
+              examples:
+                200_coupon_valid:
+                  value:
+                    valid: true
+                    discount: 100
+                    currency: INR
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_coupon_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Coupon code is invalid or expired.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_coupon_invalid:
+                  value:
+                    code: COUPON_INVALID
+                    message: Coupon code is invalid or expired.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/rewards:
+    get:
+      operationId: listRewards
+      summary: List current user's reward coupons
+      description: Returns available, redeemed and expired ₹100 reward coupons for
+        the authenticated tourist.
+      tags:
+      - Rewards
+      security: *id003
+      responses:
+        '200':
+          description: Reward list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RewardCoupon'
+              examples:
+                200_rewards_success:
+                  value:
+                  - &id010
+                    id: rew-1001
+                    code: STAY100-AB12CD
+                    amount: 100
+                    currency: INR
+                    status: AVAILABLE
+                    issuedForBookingId: book-1001
+                    redeemedOnBookingId: null
+                    expiresAt: null
+                    createdAt: '2026-09-28T12:01:00Z'
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_rewards_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/admin/hosts:
+    get:
+      operationId: listAdminHosts
+      summary: List hosts for admin review
+      description: Returns all host profiles with their approval state.
+      tags:
+      - Admin
+      security: *id003
+      responses:
+        '200':
+          description: Host list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HostProfile'
+              examples:
+                200_admin_hosts_success:
+                  value:
+                  - &id007
+                    id: host-1001
+                    userId: 20000000-0000-4000-8000-000000000001
+                    displayName: Kiran Patil
+                    bio: Local host near Bhimashankar.
+                    approvalStatus: APPROVED
+                    verifiedAt: '2026-09-20T09:00:00Z'
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_admin_hosts_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: Admin role required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_admin_hosts_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: Admin role required.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/admin/hosts/{hostId}/status:
+    patch:
+      operationId: updateHostStatus
+      summary: Approve or reject a host
+      description: Admin-only action that changes host approval state. Rejection may
+        be accompanied by an admin note.
+      tags:
+      - Admin
+      security: *id003
+      parameters:
+      - name: hostId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - APPROVED
+                  - REJECTED
+                note:
+                  type: string
+                  maxLength: 1000
+                  nullable: true
+            examples:
+              200_admin_host_approved:
+                value:
+                  status: APPROVED
+                  note: Identity and profile reviewed.
+              422_admin_host_invalid_status:
+                value:
+                  status: PENDING
+      responses:
+        '200':
+          description: Host status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HostProfile'
+              examples:
+                200_admin_host_approved:
+                  value: *id007
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_admin_host_status_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: Admin role required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_admin_host_status_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: Admin role required.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '404':
+          description: Host not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_admin_host_status_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Host not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Invalid host status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_admin_host_invalid_status:
+                  value:
+                    code: VALIDATION_ERROR
+                    message: Invalid host status.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/admin/properties:
+    get:
+      operationId: listAdminProperties
+      summary: List properties for admin review
+      description: Returns all properties, including drafts and rejected listings,
+        for admin moderation.
+      tags:
+      - Admin
+      security: *id003
+      responses:
+        '200':
+          description: Admin property list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Property'
+              examples:
+                200_admin_properties_success:
+                  value:
+                  - *id005
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_admin_properties_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: Admin role required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_admin_properties_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: Admin role required.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+  /api/v1/admin/properties/{propertyId}/status:
+    patch:
+      operationId: updatePropertyStatus
+      summary: Approve or reject a property
+      description: Admin-only moderation action. Only approved properties are visible
+        to public search and bookable.
+      tags:
+      - Admin
+      security: *id003
+      parameters:
+      - name: propertyId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - APPROVED
+                  - REJECTED
+                  - INACTIVE
+                note:
+                  type: string
+                  maxLength: 1000
+                  nullable: true
+            examples:
+              200_admin_property_approved:
+                value:
+                  status: APPROVED
+                  note: Listing reviewed.
+              422_admin_property_invalid_status:
+                value:
+                  status: DRAFT
+      responses:
+        '200':
+          description: Property status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+              examples:
+                200_admin_property_approved:
+                  value: *id005
+        '401':
+          description: Authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                401_admin_property_status_unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: Authentication token is missing or invalid.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '403':
+          description: Admin role required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                403_admin_property_status_forbidden:
+                  value:
+                    code: FORBIDDEN
+                    message: Admin role required.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '404':
+          description: Property not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                404_admin_property_status_missing:
+                  value:
+                    code: NOT_FOUND
+                    message: Property not found.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+        '422':
+          description: Invalid property status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                422_admin_property_invalid_status:
+                  value:
+                    code: VALIDATION_ERROR
+                    message: Invalid property status.
+                    requestId: 11111111-1111-4111-8111-111111111111
+                    details: {}
+components:
+  schemas:
+    StandardError:
+      type: object
+      required:
+      - code
+      - message
+      - requestId
+      properties:
+        code:
+          type: string
+          example: BOOKING_CONFLICT
+        message:
+          type: string
+          example: The selected dates are already booked.
+        requestId:
+          type: string
+          format: uuid
+          example: 11111111-1111-4111-8111-111111111111
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+      example:
+        code: BOOKING_CONFLICT
+        message: The selected dates are already booked.
+        requestId: 11111111-1111-4111-8111-111111111111
+        details:
+          propertyId: prop-1001
+    User:
+      type: object
+      required:
+      - id
+      - email
+      - fullName
+      - role
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        fullName:
+          type: string
+          minLength: 2
+          maxLength: 120
+        phone:
+          type: string
+          maxLength: 20
+          nullable: true
+        role:
+          type: string
+          enum:
+          - TOURIST
+          - HOST
+          - ADMIN
+        createdAt:
+          type: string
+          format: date-time
+      example: *id008
+    AuthResponse:
+      type: object
+      required:
+      - accessToken
+      - user
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiJ9.demo
+        expiresInSeconds:
+          type: integer
+          minimum: 60
+          example: 3600
+        user:
+          $ref: '#/components/schemas/User'
+      example: *id002
+    Destination:
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      - latitude
+      - longitude
+      - description
+      properties:
+        id:
+          type: string
+          example: dest-bhimashankar
+        name:
+          type: string
+          maxLength: 120
+        slug:
+          type: string
+          pattern: ^[a-z0-9-]+$
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        description:
+          type: string
+          maxLength: 2000
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
+      example: *id004
+    HostProfile:
+      type: object
+      required:
+      - id
+      - userId
+      - displayName
+      - approvalStatus
+      properties:
+        id:
+          type: string
+          example: host-1001
+        userId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 120
+        bio:
+          type: string
+          maxLength: 2000
+          nullable: true
+        approvalStatus:
+          type: string
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+      example: *id007
+    Property:
+      type: object
+      required:
+      - id
+      - hostId
+      - destinationId
+      - title
+      - description
+      - pricePerNight
+      - maxGuests
+      - status
+      - latitude
+      - longitude
+      - locationVerified
+      - createdAt
+      properties:
+        id:
+          type: string
+          example: prop-1001
+        hostId:
+          type: string
+          example: host-1001
+        destinationId:
+          type: string
+          example: dest-bhimashankar
+        title:
+          type: string
+          minLength: 3
+          maxLength: 160
+        description:
+          type: string
+          minLength: 20
+          maxLength: 5000
+        pricePerNight:
+          type: number
+          minimum: 1
+          maximum: 100000
+          example: 1800
+        maxGuests:
+          type: integer
+          minimum: 1
+          maximum: 20
+          example: 3
+        amenities:
+          type: array
+          items:
+            type: string
+            maxLength: 80
+          maxItems: 30
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertyPhoto'
+          maxItems: 20
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - PENDING
+          - APPROVED
+          - REJECTED
+          - INACTIVE
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        locationVerified:
+          type: boolean
+        verification:
+          $ref: '#/components/schemas/VerificationResult'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example: *id005
+    PropertyPhoto:
+      type: object
+      required:
+      - id
+      - assetUrl
+      - isVerificationPhoto
+      - createdAt
+      properties:
+        id:
+          type: string
+          example: photo-1001
+        assetUrl:
+          type: string
+          format: uri
+        caption:
+          type: string
+          maxLength: 200
+          nullable: true
+        isVerificationPhoto:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    VerificationResult:
+      type: object
+      required:
+      - status
+      - distanceMeters
+      - thresholdMeters
+      - capturedLatitude
+      - capturedLongitude
+      - propertyLatitude
+      - propertyLongitude
+      - capturedAt
+      - mode
+      - disclaimer
+      properties:
+        status:
+          type: string
+          enum:
+          - VERIFIED
+          - REJECTED
+        distanceMeters:
+          type: number
+          minimum: 0
+        thresholdMeters:
+          type: number
+          minimum: 1
+          example: 50
+        capturedLatitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        capturedLongitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        propertyLatitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        propertyLongitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        accuracyMeters:
+          type: number
+          minimum: 0
+          nullable: true
+        capturedAt:
+          type: string
+          format: date-time
+        photoAssetId:
+          type: string
+        mode:
+          type: string
+          enum:
+          - LIVE
+          - SIMULATED_AT_PROPERTY
+          - SIMULATED_AWAY
+        disclaimer:
+          type: string
+          example: GPS proximity verifies device location at capture time; it does
+            not independently guarantee room condition.
+    Booking:
+      type: object
+      required:
+      - id
+      - propertyId
+      - touristId
+      - checkIn
+      - checkOut
+      - guests
+      - nightCount
+      - subtotal
+      - discount
+      - total
+      - status
+      - paymentMethod
+      - createdAt
+      properties:
+        id:
+          type: string
+          example: book-1001
+        propertyId:
+          type: string
+          example: prop-1001
+        touristId:
+          type: string
+          format: uuid
+        checkIn:
+          type: string
+          format: date
+        checkOut:
+          type: string
+          format: date
+        guests:
+          type: integer
+          minimum: 1
+          maximum: 20
+        nightCount:
+          type: integer
+          minimum: 1
+        subtotal:
+          type: number
+          minimum: 0
+        discount:
+          type: number
+          minimum: 0
+        total:
+          type: number
+          minimum: 0
+        couponCode:
+          type: string
+          maxLength: 40
+          nullable: true
+        status:
+          type: string
+          enum:
+          - PENDING
+          - CONFIRMED
+          - CANCELLED
+          - COMPLETED
+        paymentMethod:
+          type: string
+          enum:
+          - UPI_QR
+          - DEMO_CARD
+          - PAY_AT_STAY
+        createdAt:
+          type: string
+          format: date-time
+        confirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+      example: *id006
+    BookingVoucher:
+      type: object
+      required:
+      - booking
+      - verificationCode
+      properties:
+        booking:
+          $ref: '#/components/schemas/Booking'
+        verificationCode:
+          type: string
+          pattern: ^SL-[A-Z0-9]{8}$
+        hostContact:
+          type: string
+          nullable: true
+        qrPayload:
+          type: string
+      example: *id009
+    RewardCoupon:
+      type: object
+      required:
+      - id
+      - code
+      - amount
+      - currency
+      - status
+      - issuedForBookingId
+      - createdAt
+      properties:
+        id:
+          type: string
+          example: rew-1001
+        code:
+          type: string
+          pattern: ^STAY100-[A-Z0-9]{6}$
+        amount:
+          type: number
+          minimum: 0
+          example: 100
+        currency:
+          type: string
+          enum:
+          - INR
+        status:
+          type: string
+          enum:
+          - AVAILABLE
+          - REDEEMED
+          - EXPIRED
+        issuedForBookingId:
+          type: string
+        redeemedOnBookingId:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      example: *id010
+    Review:
+      type: object
+      required:
+      - id
+      - propertyId
+      - touristId
+      - rating
+      - comment
+      - createdAt
+      properties:
+        id:
+          type: string
+          example: rev-1001
+        propertyId:
+          type: string
+        touristId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          minLength: 3
+          maxLength: 2000
+        createdAt:
+          type: string
+          format: date-time
+    UploadInit:
+      type: object
+      required:
+      - assetId
+      - uploadUrl
+      - expiresAt
+      properties:
+        assetId:
+          type: string
+          example: asset-1001
+        uploadUrl:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+    PaginatedProperties:
+      type: object
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Property'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
