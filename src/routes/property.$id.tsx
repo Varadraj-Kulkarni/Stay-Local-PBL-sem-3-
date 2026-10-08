@@ -132,7 +132,7 @@ function PropertyPage() {
         paymentMethod,
       });
 
-      toast.success("Booking confirmed! 🎉 A ₹100 reward coupon was issued to your account.");
+      toast.success("Booking confirmed! A ₹100 reward coupon was issued to your account.");
       navigate({ to: "/bookings", search: { booking: booking.id } });
     } catch (err: any) {
       toast.error(err?.message || "Booking failed.");
@@ -143,10 +143,13 @@ function PropertyPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="overflow-hidden rounded-3xl shadow-soft">
+      <div className="overflow-hidden rounded-md shadow-sm">
         <img
           src={property.photos[0] ?? "/images/hero.jpg"}
           alt={property.name}
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = "/images/hero.jpg";
+          }}
           className="aspect-16/9 w-full object-cover"
         />
       </div>
@@ -155,11 +158,11 @@ function PropertyPage() {
         <div>
           <div className="flex flex-wrap items-center gap-2">
             {property.location_verified ? (
-              <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
-                📍 Location Verified
+              <span className="rounded-md bg-secondary px-3 py-1 text-xs font-semibold text-primary">
+                Location Verified
               </span>
             ) : (
-              <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+              <span className="rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                 Location could not be verified.
               </span>
             )}
@@ -178,7 +181,7 @@ function PropertyPage() {
           <h2 className="mt-8 font-display text-xl font-semibold">Amenities</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {property.amenities.map((a) => (
-              <span key={a} className="rounded-full border border-border bg-card px-3 py-1.5 text-sm">
+              <span key={a} className="rounded-md border border-border bg-card px-3 py-1.5 text-sm">
                 {a}
               </span>
             ))}
@@ -186,7 +189,7 @@ function PropertyPage() {
 
           <h2 className="mt-8 font-display text-xl font-semibold">Your host</h2>
           <div className="surface-card mt-3 flex items-center gap-3 p-4">
-            <span className="flex size-12 items-center justify-center rounded-full bg-secondary font-display text-lg font-semibold">
+            <span className="flex size-12 items-center justify-center rounded-md bg-secondary font-display text-lg font-semibold">
               {property.host_name.charAt(0)}
             </span>
             <div>
@@ -329,7 +332,7 @@ function PropertyPage() {
                         }}
                         className="rounded-lg border border-dashed border-primary/40 bg-secondary/50 px-2 py-0.5 text-xs text-primary hover:bg-secondary transition-colors"
                       >
-                        🎁 {rw.code} (₹{rw.amount})
+                         {rw.code} (₹{rw.amount})
                       </button>
                     ))}
                   </div>
@@ -356,7 +359,7 @@ function PropertyPage() {
               </div>
             </div>
 
-            <Button className="mt-5 w-full rounded-full" onClick={book} disabled={busy}>
+            <Button className="mt-5 w-full rounded-md" onClick={book} disabled={busy}>
               {user ? (busy ? "Processing…" : `Confirm Stay (${rupees(total)})`) : "Sign in to book"}
             </Button>
           </div>

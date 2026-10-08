@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Printer, QrCode, Sparkles, Star, X } from "lucide-react";
+import { Printer, QrCode, Sparkles, Star, X, Calendar, MapPin, Ticket, Gift, CreditCard } from "lucide-react";
 import QRCode from "qrcode";
 import { useAuth } from "@/lib/auth";
 import { rupees } from "@/lib/staylocal";
@@ -79,47 +79,76 @@ function BookingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-4xl text-primary font-bold">My Trips & Rewards</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Access your stay confirmations, digital vouchers, and unlocked ₹100 rewards.
+    <div className="mx-auto max-w-5xl px-4 py-8 space-y-8">
+      {/* Dashboard Top Header (MakeMyTrip Style) */}
+      <div className="rounded-2xl bg-gradient-to-r from-emerald-950 via-primary to-teal-900 p-6 sm:p-8 text-primary-foreground shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="space-y-1.5 z-10">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-200 border border-emerald-400/30">
+            <Ticket className="size-3.5" /> Traveller Itinerary & Rewards
+          </span>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            My Trips & Digital Vouchers
+          </h1>
+          <p className="text-sm text-emerald-100/80 max-w-xl leading-relaxed">
+            Manage your homestay reservations, download offline entry QR vouchers, and redeem unlocked ₹100 coupons.
           </p>
+        </div>
+
+        <div className="z-10 shrink-0">
+          <Link to="/stays">
+            <button className="rounded-xl bg-white text-emerald-950 px-5 py-2.5 text-sm font-bold shadow-md hover:bg-emerald-50 transition-all">
+              Book Another Stay
+            </button>
+          </Link>
         </div>
       </div>
 
-      {/* Rewards Wallet Section */}
+      {/* Rewards Wallet Section (High contrast card) */}
       {(rewards.data ?? []).length > 0 && (
-        <div className="mt-6 space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            🎁 StayLocal Reward Coupons
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
+              <Gift className="size-5 text-gold-foreground" /> StayLocal Rewards Wallet
+            </h3>
+            <span className="text-xs text-muted-foreground">
+              {rewards.data!.filter((r) => r.status === "AVAILABLE").length} active coupon(s)
+            </span>
+          </div>
+
+          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
             {rewards.data!.map((r) => (
               <div
                 key={r.id}
-                className={`rounded-2xl border p-4 transition-all ${
+                className={`rounded-2xl border p-4.5 transition-all shadow-xs ${
                   r.status === "AVAILABLE"
-                    ? "border-primary/40 bg-secondary/70 shadow-soft"
-                    : "border-border bg-card/60 opacity-60"
+                    ? "border-emerald-500/40 bg-card hover:border-emerald-500/70"
+                    : "border-border bg-muted/40 opacity-60"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-primary flex items-center gap-1.5">
-                    <Sparkles className="size-4" /> ₹{r.amount} Reward
+                  <span className="font-semibold text-primary flex items-center gap-1.5 text-sm">
+                    <Sparkles className="size-4 text-gold-foreground" /> ₹{r.amount} Discount
                   </span>
-                  <span className={`text-xs uppercase px-2 py-0.5 rounded-full font-medium ${
-                    r.status === "AVAILABLE" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  <span className={`text-[10px] uppercase px-2.5 py-0.5 rounded-full font-bold tracking-wider ${
+                    r.status === "AVAILABLE"
+                      ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                      : "bg-muted text-muted-foreground"
                   }`}>
                     {r.status}
                   </span>
                 </div>
-                <p className="text-sm font-mono font-semibold mt-2 tracking-wide text-foreground">
-                  {r.code}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {r.status === "AVAILABLE" ? "Ready to redeem on your next booking!" : "Already redeemed."}
+
+                <div className="mt-3 p-2 rounded-lg bg-secondary/80 border border-border/70 flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold tracking-wider text-foreground">
+                    {r.code}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">Single-use</span>
+                </div>
+
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  {r.status === "AVAILABLE" ? "Automatically applicable at checkout." : "Already redeemed on booking."}
                 </p>
               </div>
             ))}
@@ -128,62 +157,86 @@ function BookingsPage() {
       )}
 
       {/* Bookings List */}
-      <div className="mt-8 space-y-4">
-        {bookings.isLoading && <p className="text-muted-foreground">Loading your trips…</p>}
+      <div className="space-y-4">
+        <h3 className="font-display text-xl font-bold text-foreground">
+          Trip Itinerary ({bookings.data?.length ?? 0})
+        </h3>
+
+        {bookings.isLoading && <p className="text-muted-foreground text-sm">Loading your reservations…</p>}
         {bookings.data?.length === 0 && (
-          <div className="surface-card rounded-2xl p-8 text-center border border-border">
-            <p className="text-muted-foreground">No trips booked yet.</p>
-            <Link to="/stays" className="inline-block mt-3 rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground font-semibold">
-              Browse Local Stays
+          <div className="surface-card rounded-2xl p-12 text-center border border-dashed border-border">
+            <Calendar className="size-10 text-muted-foreground mx-auto mb-3" />
+            <p className="font-semibold text-foreground">No trips booked yet</p>
+            <p className="text-xs text-muted-foreground mt-1">Ready for your next weekend escape? Discover authentic village homestays.</p>
+            <Link to="/stays" className="inline-block mt-4 rounded-xl bg-primary px-6 py-2.5 text-xs text-primary-foreground font-semibold shadow-xs">
+              Explore Maharashtra Homestays
             </Link>
           </div>
         )}
-        {bookings.data?.map((b: Booking) => (
-          <div
-            key={b.id}
-            className="surface-card flex flex-col gap-4 rounded-2xl p-5 border border-border sm:flex-row sm:items-center justify-between"
-          >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h3 className="font-display text-xl font-semibold text-foreground">
-                  {b.propertyTitle}
-                </h3>
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${
-                  b.status === "CONFIRMED"
-                    ? "bg-primary/10 text-primary"
-                    : "bg-secondary text-muted-foreground"
-                }`}>
-                  {b.status}
-                </span>
+
+        <div className="space-y-4">
+          {bookings.data?.map((b: Booking) => (
+            <div
+              key={b.id}
+              className="surface-card flex flex-col gap-5 rounded-2xl p-5 sm:p-6 border border-border/80 shadow-xs hover:border-primary/40 transition-all sm:flex-row sm:items-center justify-between"
+            >
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-display text-xl font-bold text-foreground">
+                    {b.propertyTitle}
+                  </h3>
+                  <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                    b.status === "CONFIRMED"
+                      ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                      : "bg-secondary text-muted-foreground"
+                  }`}>
+                    {b.status}
+                  </span>
+                  <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                    Method: {b.paymentMethod}
+                  </span>
+                </div>
+
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <MapPin className="size-3.5 text-primary" /> {b.propertyLocation} · <span className="font-mono text-[11px]">Ref: {b.id}</span>
+                </p>
+
+                <p className="text-xs text-foreground/90 flex items-center gap-2 pt-0.5">
+                  <Calendar className="size-3.5 text-primary" />
+                  <strong>{b.checkIn}</strong> to <strong>{b.checkOut}</strong> ({b.nightCount} night{b.nightCount === 1 ? "" : "s"}) · {b.guests} guest{b.guests === 1 ? "" : "s"}
+                </p>
+
+                <div className="pt-1 flex items-baseline gap-2">
+                  <span className="text-xs text-muted-foreground">Final Bill Paid:</span>
+                  <span className="font-display text-lg font-bold text-primary">
+                    {rupees(b.total)}
+                  </span>
+                  {b.discount > 0 && (
+                    <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                      ₹{b.discount} Coupon Saved
+                    </span>
+                  )}
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                📍 {b.propertyLocation} · Booking ID: <span className="font-mono text-xs">{b.id}</span>
-              </p>
-              <p className="text-sm text-foreground/90 pt-1">
-                📅 <strong>{b.checkIn}</strong> → <strong>{b.checkOut}</strong> ({b.nightCount} night{b.nightCount === 1 ? "" : "s"}) · {b.guests} guest(s)
-              </p>
-              <p className="text-base font-bold text-primary pt-1">
-                Total Paid: {rupees(b.total)} {b.discount > 0 && <span className="text-xs font-normal text-muted-foreground">(₹{b.discount} reward used)</span>}
-              </p>
-            </div>
 
-            <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-2">
-              <button
-                onClick={() => openVoucherModal(b.id)}
-                className="flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
-              >
-                <QrCode className="size-3.5" /> View Voucher
-              </button>
+              <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/60">
+                <button
+                  onClick={() => openVoucherModal(b.id)}
+                  className="flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/20 transition-all shadow-xs"
+                >
+                  <QrCode className="size-4" /> View Entry Voucher (QR)
+                </button>
 
-              <button
-                onClick={() => setReviewBooking(b)}
-                className="rounded-full border border-border bg-card px-4 py-2 text-xs font-medium text-foreground hover:border-primary transition-colors"
-              >
-                ⭐ Review Stay
-              </button>
+                <button
+                  onClick={() => setReviewBooking(b)}
+                  className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:border-primary transition-colors"
+                >
+                  Rate & Review Stay
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Voucher Modal */}
@@ -194,7 +247,7 @@ function BookingsPage() {
       {/* Review Modal */}
       {reviewBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setReviewBooking(null)}>
-          <div className="w-full max-w-md rounded-2xl bg-card p-6 border border-border shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 border border-border shadow-lg" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-display text-xl font-semibold">Review your stay at {reviewBooking.propertyTitle}</h3>
             <form onSubmit={submitReview} className="mt-4 space-y-4">
               <div>
@@ -224,10 +277,10 @@ function BookingsPage() {
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setReviewBooking(null)} className="rounded-full border px-4 py-2 text-sm">
+                <button type="button" onClick={() => setReviewBooking(null)} className="rounded-md border px-4 py-2 text-sm">
                   Cancel
                 </button>
-                <button type="submit" disabled={busy} className="rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground font-semibold">
+                <button type="submit" disabled={busy} className="rounded-md bg-primary px-5 py-2 text-sm text-primary-foreground font-semibold">
                   {busy ? "Submitting…" : "Submit Review"}
                 </button>
               </div>
@@ -257,22 +310,22 @@ function VoucherModal({ voucher, onClose }: { voucher: BookingVoucher; onClose: 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
       <div
-        className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-card p-6 sm:p-8 shadow-2xl border border-border print:border-none print:shadow-none print:p-0"
+        className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-md bg-card p-6 sm:p-8 shadow-lg border border-border print:border-none print:shadow-none print:p-0"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-border pb-4 print:hidden">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🏡</span>
+            <span className="text-xl"></span>
             <span className="font-display text-xl font-bold text-primary">StayLocal Official Voucher</span>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+              className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
             >
               <Printer className="size-3.5" /> Print Voucher
             </button>
-            <button onClick={onClose} className="rounded-full p-1.5 hover:bg-secondary text-muted-foreground">
+            <button onClick={onClose} className="rounded-md p-1.5 hover:bg-secondary text-muted-foreground">
               <X className="size-4" />
             </button>
           </div>
@@ -284,10 +337,10 @@ function VoucherModal({ voucher, onClose }: { voucher: BookingVoucher; onClose: 
             <div>
               <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider">Stay Confirmation</p>
               <h2 className="font-display text-2xl font-bold text-foreground mt-0.5">{voucher.property.title}</h2>
-              <p className="text-sm text-muted-foreground">📍 {voucher.property.location} ({voucher.property.address})</p>
+              <p className="text-sm text-muted-foreground"> {voucher.property.location} ({voucher.property.address})</p>
             </div>
             {qrDataUrl && (
-              <img src={qrDataUrl} alt="Voucher QR Code" className="size-24 rounded-lg border border-border shadow-soft" />
+              <img src={qrDataUrl} alt="Voucher QR Code" className="size-24 rounded-lg border border-border shadow-sm" />
             )}
           </div>
 
@@ -312,7 +365,7 @@ function VoucherModal({ voucher, onClose }: { voucher: BookingVoucher; onClose: 
 
           <div className="space-y-1 text-sm">
             <p className="text-xs text-muted-foreground uppercase font-semibold">Host Information</p>
-            <p className="font-medium">{voucher.host.displayName} · 📞 {voucher.host.phone}</p>
+            <p className="font-medium">{voucher.host.displayName} ·  {voucher.host.phone}</p>
           </div>
 
           <div className="rounded-xl bg-background p-4 border border-border space-y-1 text-sm">
@@ -338,7 +391,7 @@ function VoucherModal({ voucher, onClose }: { voucher: BookingVoucher; onClose: 
           {voucher.rewardCoupon && (
             <div className="rounded-xl bg-secondary/80 p-3.5 border border-primary/30 flex items-center justify-between text-xs">
               <div>
-                <p className="font-semibold text-primary">🎁 ₹{voucher.rewardCoupon.amount} Reward Code Unlocked:</p>
+                <p className="font-semibold text-primary"> ₹{voucher.rewardCoupon.amount} Reward Code Unlocked:</p>
                 <p className="font-mono font-bold text-sm text-foreground mt-0.5">{voucher.rewardCoupon.code}</p>
               </div>
               <span className="text-muted-foreground text-right">Valid for 180 days<br/>on your next stay</span>

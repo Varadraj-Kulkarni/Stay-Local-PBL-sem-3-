@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { createServer } from '../src/http/app.ts';
 import { getDb } from '../src/db/index.ts';
@@ -297,5 +297,18 @@ describe('StayLocal Integration Flow', () => {
       },
     });
     expect(dupRes.statusCode).toBe(409);
+  });
+
+  afterAll(async () => {
+    const db = await getDb();
+    if (testPropertyId) {
+      await db.run('DELETE FROM reviews WHERE property_id = ?', [testPropertyId]);
+      await db.run('DELETE FROM bookings WHERE property_id = ?', [testPropertyId]);
+      await db.run('DELETE FROM properties WHERE id = ?', [testPropertyId]);
+    }
+    await db.run("DELETE FROM properties WHERE title = 'Misty Ridge Homestay'");
+    await db.run("DELETE FROM bookings WHERE check_in LIKE '2026-11-%'");
+    await db.run("UPDATE rewards SET status = 'AVAILABLE', redeemed_on_booking_id = null WHERE code = 'STAY100-AB12CD'");
+    await app.close();
   });
 });

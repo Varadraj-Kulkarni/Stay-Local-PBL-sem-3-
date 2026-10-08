@@ -4,6 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
+    "start": "concurrently \"npm run dev\" \"npm run server:dev\"",
     "dev": "vite dev",
     "server:dev": "tsx server/src/index.ts",
     "build": "vite build",
@@ -84,6 +85,9 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
+    "@babel/preset-typescript": "^7.29.7",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "^2.24.0",
     "@types/bcryptjs": "^2.4.6",
@@ -94,16 +98,19 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.2.0",
+    "concurrently": "^10.0.6",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "fs-extra": "^11.4.1",
+    "glob": "^13.0.6",
     "globals": "^15.15.0",
     "nitro": "3.0.260603-beta",
     "prettier": "^3.7.3",
     "tsx": "^4.23.15",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1",
     "vite": "8.1.5",
     "vitest": "^5.0.2"

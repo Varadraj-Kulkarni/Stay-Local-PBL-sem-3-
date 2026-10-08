@@ -8,12 +8,14 @@ import { rupees, normalizeProperty } from "@/lib/staylocal";
 import { listAdminHosts, updateAdminHostStatus, listAdminProperties, updateAdminPropertyStatus } from "@/lib/api/admin";
 import { listBookings } from "@/lib/api/bookings";
 
+import { Shield, CheckCircle2, AlertTriangle, Users, Building, Calendar, Layers } from "lucide-react";
+
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Admin — StayLocal" },
+      { title: "Admin Console — StayLocal" },
       { name: "description", content: "Approve hosts and listings, and review StayLocal activity." },
-      { property: "og:title", content: "Admin — StayLocal" },
+      { property: "og:title", content: "Admin Console — StayLocal" },
       { property: "og:description", content: "Approve hosts and listings, and review StayLocal activity." },
     ],
   }),
@@ -88,13 +90,13 @@ function AdminPage() {
     <div className="flex gap-2">
       <button
         onClick={onA}
-        className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:opacity-90"
+        className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-800 transition-colors shadow-xs"
       >
         Approve
       </button>
       <button
         onClick={onR}
-        className="rounded-full border border-destructive px-3 py-1 text-xs font-semibold text-destructive hover:bg-destructive/10"
+        className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-xs font-bold text-destructive hover:bg-destructive/20 transition-colors shadow-xs"
       >
         Reject
       </button>
@@ -102,33 +104,71 @@ function AdminPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="font-display text-4xl text-primary font-bold">Admin Moderation Console</h1>
-      <p className="text-sm text-muted-foreground mt-1">Review hosts, approve listings, and observe real-time system activity.</p>
-
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        {[
-          ["Hosts Pending / Registered", hosts.data?.length],
-          ["Properties Total", properties.data?.length],
-          ["Bookings Recorded", bookings.data?.length],
-        ].map(([label, val]) => (
-          <div key={label as string} className="surface-card rounded-2xl p-5 border border-border">
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="font-display text-3xl font-bold text-primary mt-1">{val ?? 0}</p>
-          </div>
-        ))}
+    <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+      {/* Top Banner */}
+      <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-primary to-emerald-950 p-6 sm:p-8 text-primary-foreground shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="space-y-1.5 z-10">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white">
+            <Shield className="size-3.5" /> Platform Security & Verification
+          </span>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            Admin Moderation Console
+          </h1>
+          <p className="text-sm text-white/80 max-w-xl leading-relaxed">
+            Verify newly submitted rural homestay listings, review host onboarding requests, and audit real-time guest booking activity.
+          </p>
+        </div>
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-2">
+      {/* KPI Stat Cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="surface-card rounded-2xl p-5 border border-border/80 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">Registered Hosts</span>
+            <div className="size-9 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center">
+              <Users className="size-5" />
+            </div>
+          </div>
+          <p className="font-display text-3xl font-bold text-foreground mt-2">{hosts.data?.length ?? 0}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Total active & pending hosts</p>
+        </div>
+
+        <div className="surface-card rounded-2xl p-5 border border-border/80 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">Total Homestays</span>
+            <div className="size-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+              <Building className="size-5" />
+            </div>
+          </div>
+          <p className="font-display text-3xl font-bold text-foreground mt-2">{properties.data?.length ?? 0}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Live & submitted listings</p>
+        </div>
+
+        <div className="surface-card rounded-2xl p-5 border border-border/80 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">Total Bookings</span>
+            <div className="size-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+              <Calendar className="size-5" />
+            </div>
+          </div>
+          <p className="font-display text-3xl font-bold text-foreground mt-2">{bookings.data?.length ?? 0}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Confirmed guest stays</p>
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex border-b border-border/80 gap-6 text-sm font-semibold">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-              tab === t ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"
+            className={`pb-3.5 transition-colors border-b-2 ${
+              tab === t
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t}
+            {t} ({t === "Hosts" ? hosts.data?.length ?? 0 : t === "Properties" ? properties.data?.length ?? 0 : bookings.data?.length ?? 0})
           </button>
         ))}
       </div>
@@ -145,7 +185,7 @@ function AdminPage() {
                 </div>
               }
               mid={
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${
+                <span className={`rounded-md px-2.5 py-0.5 text-xs font-semibold uppercase ${
                   h.approvalStatus === "APPROVED" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
                 }`}>
                   {h.approvalStatus}
@@ -171,10 +211,10 @@ function AdminPage() {
                 </div>
               }
               mid={
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${
+                <span className={`rounded-md px-2.5 py-0.5 text-xs font-semibold uppercase ${
                   p.status === "APPROVED" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
                 }`}>
-                  {p.status} · {p.location_verified ? "📍 Verified" : "Unverified"}
+                  {p.status} · {p.location_verified ? " Verified" : "Unverified"}
                 </span>
               }
               right={

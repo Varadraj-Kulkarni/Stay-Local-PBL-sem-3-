@@ -59,7 +59,7 @@ function StaysPage() {
       </p>
 
       <form
-        className="mt-6 flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 shadow-soft sm:flex-row sm:items-center"
+        className="mt-6 flex flex-col gap-3 rounded-xl border border-border/70 bg-card/85 p-4 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center"
         onSubmit={(e) => {
           e.preventDefault();
           navigate({ to: "/stays", search: { q: term } });
@@ -68,11 +68,11 @@ function StaysPage() {
         <Input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search by destination"
-          className="h-11 flex-1"
+          placeholder="Search by destination or homestay name..."
+          className="h-11 flex-1 bg-background"
         />
-        <div className="flex items-center gap-3">
-          <label className="text-sm whitespace-nowrap text-muted-foreground">
+        <div className="flex items-center gap-3 px-2">
+          <label className="text-sm whitespace-nowrap text-muted-foreground font-medium">
             Max {rupees(maxPrice)}
           </label>
           <input
@@ -82,11 +82,11 @@ function StaysPage() {
             step={100}
             value={maxPrice}
             onChange={(e) => setMaxPrice(Number(e.target.value))}
-            className="w-36 accent-[var(--primary)]"
+            className="w-32 accent-[var(--primary)] cursor-pointer"
           />
         </div>
-        <Button type="submit" className="h-11 rounded-full">
-          <Search className="size-4" /> Search
+        <Button type="submit" className="h-11 rounded-lg px-6 font-medium shadow-xs">
+          <Search className="size-4" /> Filter
         </Button>
       </form>
 
@@ -96,7 +96,7 @@ function StaysPage() {
             setTerm("");
             navigate({ to: "/stays", search: { q: "" } });
           }}
-          className={`rounded-full border px-4 py-1.5 text-sm ${q === "" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
+          className={`rounded-md border px-4 py-1.5 text-sm ${q === "" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
         >
           All
         </button>
@@ -107,7 +107,7 @@ function StaysPage() {
               setTerm(d.name);
               navigate({ to: "/stays", search: { q: d.name } });
             }}
-            className={`rounded-full border px-4 py-1.5 text-sm ${q === d.name ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
+            className={`rounded-md border px-4 py-1.5 text-sm ${q === d.name ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}
           >
             {d.name}
           </button>

@@ -18,7 +18,7 @@ Write-Host "    Stay with Locals, Pay Less, Experience More.          " -Foregro
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "1. Starting StayLocal API server on http://localhost:8787..." -ForegroundColor Cyan
-$serverJob = Start-Process -FilePath "$scriptDir\.tools\node\node.exe" -ArgumentList "$scriptDir\node_modules\tsx\dist\cli.mjs", "$scriptDir\server\src\index.ts" -PassThru -NoNewWindow
+$serverJob = Start-Process -FilePath "$scriptDir\.tools\node\node.exe" -ArgumentList "`"$scriptDir\node_modules\tsx\dist\cli.mjs`"", "`"$scriptDir\server\src\index.ts`"" -PassThru -NoNewWindow
 
 Start-Sleep -Seconds 2
 

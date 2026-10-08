@@ -54,10 +54,76 @@ export type Reward = {
 };
 
 export const DESTINATIONS = [
-  { id: "dest-bhimashankar", name: "Bhimashankar", tag: "Forests & temples", image: "/images/bhimashankar.jpg" },
-  { id: "dest-visapur", name: "Visapur Fort", tag: "Sunrise treks", image: "/images/visapur.jpg" },
-  { id: "dest-lonavala", name: "Lonavala", tag: "Monsoon valleys", image: "/images/lonavala.jpg" },
-  { id: "dest-pune", name: "Pune", tag: "Heritage & food", image: "/images/pune.jpg" },
+  {
+    id: "dest-lonavala",
+    name: "Lonavala",
+    tag: "Misty Sahyadri valleys, seasonal waterfalls & hill retreats",
+    image: "/images/lonavala.jpg",
+    landmark: "Tiger's Leap & Western Ghats Valleys",
+  },
+  {
+    id: "dest-visapur",
+    name: "Visapur Fort",
+    tag: "Sunrise stone stair treks & village farm cottages",
+    image: "/images/visapur.jpg",
+    landmark: "Visapur Waterfall Trek Ridge",
+  },
+  {
+    id: "dest-bhimashankar",
+    name: "Bhimashankar",
+    tag: "Sacred groves, Giant Squirrel rainforest trails & temple serenity",
+    image: "/images/bhimashankar.jpg",
+    landmark: "Bhimashankar Wildlife Sanctuary & Jyotirlinga",
+  },
+  {
+    id: "dest-pune",
+    name: "Pune",
+    tag: "Historic Maratha courtyards, artisanal peths & street food walks",
+    image: "/images/pune.jpg",
+    landmark: "Shaniwar Wada & Heritage Wadas",
+  },
+  {
+    id: "dest-jaipur",
+    name: "Jaipur",
+    tag: "Hawa Mahal, heritage havelis & authentic Rajasthani hospitality",
+    image: "https://images.unsplash.com/photo-1602498456745-e9503b30470b?auto=format&fit=crop&w=800&q=80",
+    landmark: "Hawa Mahal & Amber Fort",
+  },
+  {
+    id: "dest-udaipur",
+    name: "Udaipur",
+    tag: "Lake Pichola, royal courtyards & serene Mewar lakeside stays",
+    image: "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?auto=format&fit=crop&w=800&q=80",
+    landmark: "City Palace & Lake Pichola",
+  },
+  {
+    id: "dest-varanasi",
+    name: "Varanasi",
+    tag: "Historic Ganga ghats, morning boat sunrise & spiritual alleyways",
+    image: "https://images.unsplash.com/photo-1571536802807-30451e3955d8?auto=format&fit=crop&w=800&q=80",
+    landmark: "Dashashwamedh & Assi Ghats",
+  },
+  {
+    id: "dest-munnar",
+    name: "Munnar",
+    tag: "Rolling emerald tea plantations, cool mist & spice farmstays",
+    image: "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80",
+    landmark: "Anamudi Tea Plantations",
+  },
+  {
+    id: "dest-manali",
+    name: "Manali",
+    tag: "Solang valley, cedar pine forests & Himalayan apple orchard homes",
+    image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80",
+    landmark: "Solang Valley & Rohtang Pass Peaks",
+  },
+  {
+    id: "dest-goa",
+    name: "Goa",
+    tag: "Coastal village living, Portuguese heritage cottages & beach sunsets",
+    image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80",
+    landmark: "Palolem Coast & Fontainhas Latin Quarter",
+  },
 ];
 
 export const AMENITY_OPTIONS = [
@@ -77,10 +143,10 @@ export const AMENITY_OPTIONS = [
 ];
 
 export const EXPERIENCES = [
-  { title: "Sunrise fort trek", place: "Visapur Fort", detail: "Walk up with a host who grew up on these slopes.", emoji: "🥾" },
-  { title: "Village kitchen evening", place: "Bhimashankar", detail: "Cook bhakri and pithla with the family.", emoji: "🍲" },
-  { title: "Monsoon waterfall trail", place: "Lonavala", detail: "Hidden falls only locals still visit.", emoji: "💧" },
-  { title: "Old-city food walk", place: "Pune", detail: "Tulshibaug chaat, misal and sabudana vada.", emoji: "🥘" },
+  { title: "Sunrise fort trek", place: "Visapur Fort", detail: "Trek up with a host who grew up navigating these historic mountain trails.", icon: "Compass" },
+  { title: "Authentic village dining", place: "Bhimashankar", detail: "Learn to cook woodfire bhakri, pithla, and fresh organic herbs with the host family.", icon: "Utensils" },
+  { title: "Monsoon waterfall trail", place: "Lonavala", detail: "Hidden scenic stream cascades and forest trails known exclusively to local residents.", icon: "Waves" },
+  { title: "Old-city heritage walk", place: "Pune", detail: "Historic wada architecture tour followed by authentic local culinary delicacies.", icon: "MapPin" },
 ];
 
 export function nightsBetween(checkIn: string, checkOut: string) {

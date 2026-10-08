@@ -19,14 +19,14 @@ export async function getDb(): Promise<DatabaseAdapter> {
     }
     const pg = new PostgresAdapter(url);
     await pg.init();
-    await seedDatabase(pg);
+    // await seedDatabase(pg); // Removed test/demo data
     activeDb = pg;
     return pg;
   } else {
     const sqlitePath = process.env['STAYLOCAL_SQLITE_PATH'] || './data/staylocal.sqlite';
     const sqlite = new SqliteAdapter(sqlitePath);
     await sqlite.init();
-    await seedDatabase(sqlite);
+    // await seedDatabase(sqlite); // Removed test/demo data
     activeDb = sqlite;
     return sqlite;
   }

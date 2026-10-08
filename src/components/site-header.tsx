@@ -17,7 +17,7 @@ export function SiteHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/85 backdrop-blur-md shadow-xs">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
           <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -31,7 +31,7 @@ export function SiteHeader() {
             <Link
               key={l.to}
               to={l.to}
-              className="rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               activeProps={{ className: "bg-secondary text-foreground" }}
             >
               {l.label}
@@ -40,7 +40,7 @@ export function SiteHeader() {
           {user ? (
             <Button
               variant="outline"
-              className="ml-2 rounded-full"
+              className="ml-2 rounded-md"
               onClick={async () => {
                 await signOut();
                 navigate({ to: "/", replace: true });
@@ -51,12 +51,12 @@ export function SiteHeader() {
           ) : (
             <>
               <Link to="/auth" search={{ mode: "signup", role: "host" }} className="ml-2">
-                <Button variant="ghost" className="rounded-full">
+                <Button variant="ghost" className="rounded-md">
                   Become a host
                 </Button>
               </Link>
               <Link to="/auth" search={{ mode: "signin", role: "tourist" }}>
-                <Button className="rounded-full">Sign in</Button>
+                <Button className="rounded-md">Sign in</Button>
               </Link>
             </>
           )}
@@ -87,7 +87,7 @@ export function SiteHeader() {
             {user ? (
               <Button
                 variant="outline"
-                className="mt-2 rounded-full"
+                className="mt-2 rounded-md"
                 onClick={async () => {
                   setOpen(false);
                   await signOut();
@@ -98,7 +98,7 @@ export function SiteHeader() {
               </Button>
             ) : (
               <Link to="/auth" search={{ mode: "signin", role: "tourist" }} onClick={() => setOpen(false)}>
-                <Button className="mt-2 w-full rounded-full">Sign in / Register</Button>
+                <Button className="mt-2 w-full rounded-md">Sign in / Register</Button>
               </Link>
             )}
           </div>

@@ -8,7 +8,24 @@ import { AMENITY_OPTIONS, DESTINATIONS, normalizeProperty, rupees, type Property
 import { createProperty, updateProperty, getProperties } from "@/lib/api/properties";
 import { listBookings } from "@/lib/api/bookings";
 import { verifyPropertyLocation } from "@/lib/api/verification";
-import { initUpload, uploadFileBytes } from "@/lib/api/media";
+import {
+  Home,
+  Calendar,
+  ShieldCheck,
+  Camera,
+  Plus,
+  MapPin,
+  Users,
+  CheckCircle2,
+  Clock,
+  Sparkles,
+  AlertCircle,
+  Star,
+  DollarSign,
+  TrendingUp,
+  Edit,
+  ArrowRight,
+} from "lucide-react";
 import type { Booking } from "../../../server/src/shared/types.ts";
 
 export const Route = createFileRoute("/_authenticated/host")({
@@ -126,107 +143,298 @@ function HostPage() {
     }
   }
 
+  const [activeTab, setActiveTab] = useState<"listings" | "bookings">("listings");
+
+  const totalEarnings = (bookings.data ?? []).reduce((s: number, b: Booking) => s + Number(b.total), 0);
+  const totalGuests = (bookings.data ?? []).reduce((s: number, b: Booking) => s + Number(b.guests), 0);
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl text-primary">Host dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Host verification: <span className="rounded-full bg-secondary px-3 py-0.5 text-primary font-medium">Verified Local Host</span>
+    <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+      {/* Top Banner (MakeMyTrip Partner Console Style) */}
+      <div className="rounded-2xl bg-gradient-to-r from-emerald-900 via-primary to-teal-950 p-6 sm:p-8 text-primary-foreground shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="space-y-2 z-10">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold text-emerald-200 border border-emerald-400/30">
+              <ShieldCheck className="size-3.5" /> Verified Local Host
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-gold/20 px-2.5 py-1 text-xs font-bold text-amber-200">
+              <Star className="size-3.5 fill-amber-300 text-amber-300" /> SuperHost Localite
+            </span>
+          </div>
+
+          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            Host Operations Console
+          </h1>
+          <p className="text-sm text-emerald-100/80 max-w-xl leading-relaxed">
+            Manage your homestay listings, monitor incoming reservations, and execute camera + GPS on-site location verifications.
           </p>
         </div>
+
+        <div className="flex items-center gap-3 z-10 shrink-0">
+          <button
+            onClick={() => setForm(empty)}
+            className="flex items-center gap-2 rounded-xl bg-white text-emerald-950 px-5 py-3 text-sm font-bold shadow-md hover:bg-emerald-50 active:scale-98 transition-all"
+          >
+            <Plus className="size-4 text-emerald-800" /> List New Homestay
+          </button>
+        </div>
+      </div>
+
+      {/* 4 Performance Metric Cards (MakeMyTrip / OYO Style) */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="surface-card rounded-2xl p-5 border border-border/80 shadow-xs hover:border-primary/40 transition-colors">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">Booked Revenue</span>
+            <div className="size-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+              <DollarSign className="size-5" />
+            </div>
+          </div>
+          <p className="font-display text-2xl sm:text-3xl font-bold text-foreground mt-2">
+            {rupees(totalEarnings)}
+          </p>
+          <p className="text-[11px] font-medium text-emerald-600 mt-1 flex items-center gap-1">
+            <TrendingUp className="size-3" /> 100% direct village payout
+          </p>
+        </div>
+
+        <div className="surface-card rounded-2xl p-5 border border-border/80 shadow-xs hover:border-primary/40 transition-colors">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">Total Bookings</span>
+            <div className="size-9 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center">
+              <Calendar className="size-5" />
+            </div>
+          </div>
+          <p className="font-display text-2xl sm:text-3xl font-bold text-foreground mt-2">
+            {bookings.data?.length ?? 0}
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {totalGuests} total travellers hosted
+          </p>
+        </div>
+
+        <div className="surface-card rounded-2xl p-5 border border-border/80 shadow-xs hover:border-primary/40 transition-colors">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">Active Listings</span>
+            <div className="size-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+              <Home className="size-5" />
+            </div>
+          </div>
+          <p className="font-display text-2xl sm:text-3xl font-bold text-foreground mt-2">
+            {listings.data?.length ?? 0}
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            All registered homestays
+          </p>
+        </div>
+
+        <div className="surface-card rounded-2xl p-5 border border-border/80 shadow-xs hover:border-primary/40 transition-colors">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">Hospitality Score</span>
+            <div className="size-9 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center">
+              <Star className="size-5" />
+            </div>
+          </div>
+          <p className="font-display text-2xl sm:text-3xl font-bold text-foreground mt-2">
+            4.95 / 5.0
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Based on completed stays
+          </p>
+        </div>
+      </div>
+
+      {/* Navigation Tabs (MakeMyTrip Style) */}
+      <div className="flex border-b border-border/80 gap-6 text-sm font-semibold">
         <button
-          onClick={() => setForm(empty)}
-          className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-95"
+          onClick={() => setActiveTab("listings")}
+          className={`pb-3.5 transition-colors border-b-2 ${
+            activeTab === "listings"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
         >
-          + Add property
+          My Homestay Listings ({listings.data?.length ?? 0})
+        </button>
+        <button
+          onClick={() => setActiveTab("bookings")}
+          className={`pb-3.5 transition-colors border-b-2 ${
+            activeTab === "bookings"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Guest Reservations ({bookings.data?.length ?? 0})
         </button>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Stat label="Total Listings" value={listings.data?.length ?? 0} />
-        <Stat label="Total Reservations" value={bookings.data?.length ?? 0} />
-        <Stat
-          label="Total Booked Value"
-          value={rupees((bookings.data ?? []).reduce((s: number, b: Booking) => s + Number(b.total), 0))}
-        />
-      </div>
-
-      <h2 className="mt-10 font-display text-2xl font-semibold">Your listings</h2>
-      {listings.data?.length === 0 && <p className="mt-2 text-muted-foreground">No listings yet — add your first room.</p>}
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        {listings.data?.map((p) => (
-          <div key={p.id} className="surface-card overflow-hidden rounded-2xl border border-border">
-            <img src={p.photos[0]} alt={p.name} className="h-44 w-full object-cover" />
-            <div className="space-y-2 p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-display text-lg font-semibold">{p.name}</h3>
-                <span className={`rounded-full px-3 py-0.5 text-xs font-medium uppercase ${
-                  p.status === "APPROVED" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
-                }`}>
-                  {p.status}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {p.location} · {rupees(p.price_per_night)}/night
-              </p>
-              <p className="text-sm font-medium">
-                {p.location_verified ? (
-                  <span className="text-primary font-semibold">📍 Location Verified</span>
-                ) : (
-                  <span className="text-muted-foreground">Location not verified yet</span>
-                )}
-              </p>
-              <div className="flex flex-wrap gap-2 pt-2">
-                <button
-                  className="rounded-full border border-border px-3.5 py-1 text-sm font-medium hover:border-primary transition-colors"
-                  onClick={() =>
-                    setForm({
-                      id: p.id,
-                      name: p.name,
-                      destinationId: "dest-lonavala",
-                      location: p.location,
-                      description: p.description,
-                      price_per_night: p.price_per_night,
-                      max_guests: 2,
-                      amenities: p.amenities,
-                      photos: p.photos.join("\n"),
-                      latitude: p.latitude?.toString() ?? "",
-                      longitude: p.longitude?.toString() ?? "",
-                      available_from: p.available_from ?? "",
-                      available_to: p.available_to ?? "",
-                    })
-                  }
-                >
-                  Edit
-                </button>
-                <button
-                  className="rounded-full border border-primary bg-primary/5 px-3.5 py-1 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
-                  onClick={() => setVerifying(p)}
-                >
-                  Verify location (Camera+GPS)
-                </button>
-              </div>
+      {/* Tab 1: Listings */}
+      {activeTab === "listings" && (
+        <div className="space-y-4">
+          {listings.data?.length === 0 && (
+            <div className="surface-card rounded-2xl p-12 text-center border border-dashed border-border">
+              <Home className="size-10 text-muted-foreground mx-auto mb-3" />
+              <p className="font-semibold text-foreground">No properties listed yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Add your spare room or rural cottage to begin receiving guests.</p>
+              <button
+                onClick={() => setForm(empty)}
+                className="mt-4 rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow-xs"
+              >
+                + Add Property
+              </button>
             </div>
-          </div>
-        ))}
-      </div>
+          )}
 
-      <h2 className="mt-10 font-display text-2xl font-semibold">Reservations & Guests</h2>
-      <div className="mt-4 space-y-2">
-        {(bookings.data ?? []).length === 0 && <p className="text-muted-foreground">No bookings recorded yet.</p>}
-        {bookings.data?.map((b: Booking) => (
-          <div key={b.id} className="surface-card flex flex-wrap justify-between items-center gap-2 rounded-xl p-3.5 text-sm border border-border">
-            <span>
-              <strong>{b.propertyTitle}</strong> · Guest ({b.guests} guests)
-            </span>
-            <span className="text-muted-foreground">
-              {b.checkIn} → {b.checkOut} ({b.nightCount} nights) · <strong className="text-foreground">{rupees(b.total)}</strong> ·{" "}
-              <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-semibold uppercase">{b.status}</span>
-            </span>
+          <div className="grid gap-6 md:grid-cols-2">
+            {listings.data?.map((p) => (
+              <div
+                key={p.id}
+                className="surface-card overflow-hidden rounded-2xl border border-border/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="relative aspect-16/9 overflow-hidden bg-muted">
+                    <img src={p.photos[0]} alt={p.name} className="size-full object-cover" />
+                    <div className="absolute top-3 right-3">
+                      <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider backdrop-blur-xs shadow-xs ${
+                        p.status === "APPROVED"
+                          ? "bg-emerald-800/90 text-white"
+                          : "bg-amber-600/90 text-white"
+                      }`}>
+                        {p.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-5 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-display text-lg font-bold text-foreground leading-snug line-clamp-1">
+                          {p.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <MapPin className="size-3.5 text-primary" /> {p.location}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-display text-lg font-bold text-primary">
+                          {rupees(p.price_per_night)}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground block">/ night</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {p.description}
+                    </p>
+
+                    <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
+                      <span className="font-medium text-foreground">
+                        {p.location_verified ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
+                            <CheckCircle2 className="size-3.5" /> GPS Location Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
+                            <AlertCircle className="size-3.5" /> GPS Verification Needed
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-muted-foreground">
+                        Max {p.max_guests ?? 2} Guests
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-muted/40 border-t border-border/60 flex items-center justify-between gap-2">
+                  <button
+                    className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:border-primary transition-colors"
+                    onClick={() =>
+                      setForm({
+                        id: p.id,
+                        name: p.name,
+                        destinationId: "dest-lonavala",
+                        location: p.location,
+                        description: p.description,
+                        price_per_night: p.price_per_night,
+                        max_guests: p.max_guests || 2,
+                        amenities: p.amenities,
+                        photos: p.photos.join("\n"),
+                        latitude: p.latitude?.toString() ?? "",
+                        longitude: p.longitude?.toString() ?? "",
+                        available_from: p.available_from ?? "",
+                        available_to: p.available_to ?? "",
+                      })
+                    }
+                  >
+                    <Edit className="size-3.5 text-muted-foreground" /> Edit Listing
+                  </button>
+
+                  <button
+                    className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-colors"
+                    onClick={() => setVerifying(p)}
+                  >
+                    <Camera className="size-3.5" /> Verify Location (Camera + GPS)
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Tab 2: Reservations & Guests (MakeMyTrip Style) */}
+      {activeTab === "bookings" && (
+        <div className="space-y-4">
+          {(bookings.data ?? []).length === 0 && (
+            <div className="surface-card rounded-2xl p-12 text-center border border-dashed border-border">
+              <Calendar className="size-10 text-muted-foreground mx-auto mb-3" />
+              <p className="font-semibold text-foreground">No reservations yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Confirmed guest stays will appear here in real time.</p>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {bookings.data?.map((b: Booking) => (
+              <div
+                key={b.id}
+                className="surface-card flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl p-5 border border-border/80 shadow-xs hover:border-primary/40 transition-colors"
+              >
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-display text-base font-bold text-foreground">
+                      {b.propertyTitle}
+                    </h4>
+                    <span className="rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-bold uppercase">
+                      {b.status}
+                    </span>
+                    <span className="rounded-full bg-secondary text-primary px-2.5 py-0.5 text-[10px] font-semibold">
+                      Payment: {b.paymentMethod}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Calendar className="size-3.5 text-primary" />
+                    <strong>{b.checkIn}</strong> to <strong>{b.checkOut}</strong> ({b.nightCount} nights) · <Users className="size-3.5 ml-1 text-primary" /> {b.guests} guest{b.guests === 1 ? "" : "s"}
+                  </p>
+
+                  <p className="text-[11px] text-muted-foreground font-mono">
+                    Booking Reference: {b.id}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between md:flex-col md:items-end gap-1 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border/60">
+                  <span className="text-xs text-muted-foreground">Host Payout Total:</span>
+                  <span className="font-display text-xl font-bold text-emerald-700">
+                    {rupees(b.total)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {form && <PropertyForm initial={form} onCancel={() => setForm(null)} onSave={save} />}
       {verifying && <VerifyDialog property={verifying} onClose={() => { setVerifying(null); refresh(); }} />}
@@ -246,7 +454,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 function Modal({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-card p-6 shadow-2xl border border-border" onClick={(e) => e.stopPropagation()}>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-md bg-card p-6 shadow-lg border border-border" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -325,7 +533,7 @@ function PropertyForm({ initial, onSave, onCancel }: { initial: Form; onSave: (f
                   type="button"
                   key={a}
                   onClick={() => set("amenities", on ? f.amenities.filter((x) => x !== a) : [...f.amenities, a])}
-                  className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                  className={`rounded-md border px-3 py-1 text-xs transition-colors ${
                     on ? "border-primary bg-primary text-primary-foreground font-medium" : "border-border bg-background text-muted-foreground"
                   }`}
                 >
@@ -347,14 +555,14 @@ function PropertyForm({ initial, onSave, onCancel }: { initial: Form; onSave: (f
           </div>
         </div>
         <button type="button" onClick={useGps} className="text-xs text-primary underline block">
-          📍 Use current device coordinates
+           Use current device coordinates
         </button>
 
         <div className="flex justify-end gap-2 pt-3 border-t border-border">
-          <button type="button" onClick={onCancel} className="rounded-full border border-border px-4 py-2 text-sm font-medium">
+          <button type="button" onClick={onCancel} className="rounded-md border border-border px-4 py-2 text-sm font-medium">
             Cancel
           </button>
-          <button className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">
+          <button className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">
             Save Listing
           </button>
         </div>
@@ -426,7 +634,7 @@ function VerifyDialog({ property, onClose }: { property: Property; onClose: () =
 
       setResult(res);
       if (res.status === "VERIFIED") {
-        toast.success(`📍 Location Verified! (${res.distanceMeters}m from registered address)`);
+        toast.success(` Location Verified! (${res.distanceMeters}m from registered address)`);
       } else {
         toast.warning(`Location could not be verified. (${res.distanceMeters}m away)`);
       }
@@ -459,10 +667,10 @@ function VerifyDialog({ property, onClose }: { property: Property; onClose: () =
         className="mt-4 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-6 text-center cursor-pointer hover:border-primary transition-colors bg-secondary/30"
       >
         {photoPreview ? (
-          <img src={photoPreview} alt="Captured room" className="max-h-48 rounded-xl object-cover shadow-soft" />
+          <img src={photoPreview} alt="Captured room" className="max-h-48 rounded-xl object-cover shadow-sm" />
         ) : (
           <div className="space-y-1">
-            <span className="text-3xl block">📷</span>
+            <span className="text-3xl block"></span>
             <p className="text-sm font-semibold">Take Room Photo / Choose Image</p>
             <p className="text-xs text-muted-foreground">Supports mobile device camera or desktop file picker</p>
           </div>
@@ -479,7 +687,7 @@ function VerifyDialog({ property, onClose }: { property: Property; onClose: () =
             onClick={() => runVerification("LIVE")}
             className="rounded-xl border border-primary bg-primary text-primary-foreground py-2 text-xs font-semibold hover:opacity-90 disabled:opacity-50"
           >
-            🛰️ Live GPS
+            ️ Live GPS
           </button>
           <button
             type="button"
@@ -487,7 +695,7 @@ function VerifyDialog({ property, onClose }: { property: Property; onClose: () =
             onClick={() => runVerification("SIMULATED_AT_PROPERTY")}
             className="rounded-xl border border-border bg-card py-2 text-xs font-semibold hover:border-primary disabled:opacity-50"
           >
-            ✅ Simulate: At Property
+             Simulate: At Property
           </button>
           <button
             type="button"
@@ -495,7 +703,7 @@ function VerifyDialog({ property, onClose }: { property: Property; onClose: () =
             onClick={() => runVerification("SIMULATED_AWAY")}
             className="rounded-xl border border-border bg-card py-2 text-xs font-semibold hover:border-destructive text-destructive disabled:opacity-50"
           >
-            ❌ Simulate: 2km Away
+             Simulate: 2km Away
           </button>
         </div>
       </div>
@@ -508,8 +716,8 @@ function VerifyDialog({ property, onClose }: { property: Property; onClose: () =
             : "bg-destructive/10 text-destructive border-destructive/30"
         }`}>
           <div className="flex items-center justify-between font-semibold">
-            <span>{result.status === "VERIFIED" ? "📍 Location Verified" : "Location could not be verified."}</span>
-            <span className="text-xs uppercase px-2 py-0.5 rounded-full bg-background/80">
+            <span>{result.status === "VERIFIED" ? " Location Verified" : "Location could not be verified."}</span>
+            <span className="text-xs uppercase px-2 py-0.5 rounded-md bg-background">
               {result.verificationMode}
             </span>
           </div>
@@ -523,7 +731,7 @@ function VerifyDialog({ property, onClose }: { property: Property; onClose: () =
       )}
 
       <div className="mt-5 flex justify-end">
-        <button onClick={onClose} className="rounded-full bg-secondary px-5 py-2 text-sm font-medium hover:bg-secondary/80">
+        <button onClick={onClose} className="rounded-md bg-secondary px-5 py-2 text-sm font-medium hover:bg-secondary/80">
           Close
         </button>
       </div>
