@@ -109,5 +109,22 @@ export async function createServer() {
   // Health check endpoint
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
+  // Root status endpoint
+  app.get('/', async () => ({
+    service: 'StayLocal API',
+    status: 'online',
+    version: '1.0.0',
+    health: '/health',
+    apiBase: '/api/v1',
+    endpoints: {
+      destinations: '/api/v1/destinations',
+      properties: '/api/v1/properties',
+      auth: '/api/v1/auth',
+      bookings: '/api/v1/bookings',
+    },
+    message: 'StayLocal REST API is running. Access the user interface via the Vercel frontend URL.',
+    timestamp: new Date().toISOString(),
+  }));
+
   return app;
 }
