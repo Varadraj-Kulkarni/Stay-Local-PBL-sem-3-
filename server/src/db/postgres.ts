@@ -8,7 +8,11 @@ export class PostgresAdapter implements DatabaseAdapter {
   private pool: pg.Pool;
 
   constructor(connectionString: string) {
-    this.pool = new Pool({ connectionString });
+    const isSsl = connectionString.includes('sslmode=require') || connectionString.includes('neon.tech');
+    this.pool = new Pool({
+      connectionString,
+      ssl: isSsl ? { rejectUnauthorized: false } : undefined,
+    });
   }
 
   async init(): Promise<void> {
