@@ -37,7 +37,7 @@ export function setStoredToken(token: string | null) {
 }
 
 export const API_BASE_URL =
-  ((import.meta.env['VITE_API_BASE_URL'] as string) || 'http://localhost:8787').replace(/\/$/, '') + '/api/v1';
+  ((import.meta.env['VITE_API_BASE_URL'] as string) || (import.meta.env['VITE_API_URL'] as string) || 'http://localhost:8787').replace(/\/$/, '') + '/api/v1';
 
 export async function apiRequest<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
